@@ -5,6 +5,13 @@ function notFoundHandler(req, res, next) {
 }
 
 function errorHandler(error, req, res, next) {
+  if (error?.name === "MulterError") {
+    return res.status(error.statusCode || 400).json({
+      success: false,
+      message: error.message || "Invalid upload request.",
+    });
+  }
+
   if (error?.code === "P2002") {
     const fields = Array.isArray(error.meta?.target)
       ? error.meta.target.join(", ")

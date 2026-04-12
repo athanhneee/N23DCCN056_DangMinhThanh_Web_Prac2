@@ -6,8 +6,10 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
+  uploadProductImage,
 } = require("../controllers/productController");
 const { productValidation } = require("../middleware/validate");
+const { uploadProductImage: uploadProductImageMiddleware } = require("../middleware/uploadProductImage");
 
 /**
  * @swagger
@@ -106,6 +108,39 @@ router.get("/:id", getProductById);
  *         description: Product created successfully
  */
 router.post("/", productValidation, createProduct);
+
+/**
+ * @swagger
+ * /api/products/{id}/image:
+ *   post:
+ *     summary: Upload a product image
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             required: [image]
+ *             properties:
+ *               image:
+ *                 type: string
+ *                 format: binary
+ *     responses:
+ *       200:
+ *         description: Product image uploaded successfully
+ *       400:
+ *         description: Invalid product id or missing image file
+ *       404:
+ *         description: Product not found
+ */
+router.post("/:id/image", uploadProductImageMiddleware, uploadProductImage);
 
 /**
  * @swagger

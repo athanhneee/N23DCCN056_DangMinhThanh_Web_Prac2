@@ -1,4 +1,9 @@
 const prisma = require("../lib/prisma");
+const {
+  getCachedProducts,
+  invalidateProductsCache,
+  setCachedProducts,
+} = require("../lib/productCache");
 
 function toPlainProduct(product) {
   if (!product) {
@@ -21,6 +26,13 @@ function slugify(value) {
 
 async function getProducts(req, res, next) {
   try {
+    const cachedPayload = await getCachedProducts(req.query);
+
+    if (cachedPayload) {
+      res.set("X-Cache", "HIT");
+      return res.json(cachedPayload);
+    }
+
     const page = Number.parseInt(req.query.page || "1", 10);
     const limit = Number.parseInt(req.query.limit || "10", 10);
     const skip = (page - 1) * limit;
@@ -81,7 +93,7 @@ async function getProducts(req, res, next) {
       prisma.product.count({ where }),
     ]);
 
-    res.json({
+    const payload = {
       success: true,
       data: products.map(toPlainProduct),
       pagination: {
@@ -90,7 +102,12 @@ async function getProducts(req, res, next) {
         limit,
         totalPages: Math.ceil(total / limit) || 1,
       },
-    });
+    };
+
+    await setCachedProducts(req.query, payload);
+
+    res.set("X-Cache", "MISS");
+    res.json(payload);
   } catch (error) {
     next(error);
   }
@@ -148,6 +165,8 @@ async function createProduct(req, res, next) {
       },
     });
 
+    await invalidateProductsCache();
+
     res.status(201).json({
       success: true,
       data: toPlainProduct(product),
@@ -185,10 +204,50 @@ async function updateProduct(req, res, next) {
       },
     });
 
+    await invalidateProductsCache();
+
     res.json({
       success: true,
       data: toPlainProduct(product),
       message: "Product updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function uploadProductImage(req, res, next) {
+  try {
+    const productId = Number.parseInt(req.params.id, 10);
+
+    if (!Number.isInteger(productId) || productId <= 0) {
+      const error = new Error("Product id is invalid.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (!req.file?.path) {
+      const error = new Error("Image upload failed.");
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const product = await prisma.product.update({
+      where: { id: productId },
+      data: {
+        imageUrl: req.file.path,
+      },
+      include: {
+        category: true,
+      },
+    });
+
+    await invalidateProductsCache();
+
+    res.json({
+      success: true,
+      data: toPlainProduct(product),
+      message: "Product image uploaded successfully.",
     });
   } catch (error) {
     next(error);
@@ -204,6 +263,8 @@ async function deleteProduct(req, res, next) {
       data: { isActive: false },
     });
 
+    await invalidateProductsCache();
+
     res.json({
       success: true,
       message: "Product hidden successfully.",
@@ -218,5 +279,6 @@ module.exports = {
   deleteProduct,
   getProductById,
   getProducts,
+  uploadProductImage,
   updateProduct,
 };
