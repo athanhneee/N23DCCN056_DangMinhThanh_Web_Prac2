@@ -24,6 +24,8 @@ const {
  *   post:
  *     summary: Create a new order
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -36,13 +38,15 @@ const {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 data:
- *                   $ref: '#/components/schemas/Order'
+ *               $ref: '#/components/schemas/CreateOrderResponse'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       422:
+ *         $ref: '#/components/responses/ValidationFailed'
+ *       409:
+ *         $ref: '#/components/responses/ConflictError'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.post("/", createOrderValidation, createOrder);
 
@@ -52,6 +56,8 @@ router.post("/", createOrderValidation, createOrder);
  *   get:
  *     summary: Get orders by customer id
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: customerId
@@ -76,6 +82,16 @@ router.post("/", createOrderValidation, createOrder);
  *     responses:
  *       200:
  *         description: Orders returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/PaginatedOrdersResponse'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       422:
+ *         $ref: '#/components/responses/ValidationFailed'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.get("/customer/:customerId", getOrdersByCustomerValidation, getOrdersByCustomer);
 
@@ -85,6 +101,8 @@ router.get("/customer/:customerId", getOrdersByCustomerValidation, getOrdersByCu
  *   patch:
  *     summary: Update order status by Mongo _id or orderCode
  *     tags: [Orders]
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -97,17 +115,22 @@ router.get("/customer/:customerId", getOrdersByCustomerValidation, getOrdersByCu
  *       content:
  *         application/json:
  *           schema:
- *             type: object
- *             required: [status]
- *             properties:
- *               status:
- *                 type: string
- *                 enum: [pending, confirmed, shipping, delivered, cancelled]
- *           example:
- *             status: confirmed
+ *             $ref: '#/components/schemas/UpdateOrderStatusRequest'
  *     responses:
  *       200:
  *         description: Order status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/UpdateOrderStatusResponse'
+ *       401:
+ *         $ref: '#/components/responses/UnauthorizedError'
+ *       404:
+ *         $ref: '#/components/responses/NotFoundError'
+ *       422:
+ *         $ref: '#/components/responses/ValidationFailed'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
  */
 router.patch("/:id/status", updateOrderStatusValidation, updateOrderStatus);
 
