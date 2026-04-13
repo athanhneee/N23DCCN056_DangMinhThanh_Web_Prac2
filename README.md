@@ -74,6 +74,9 @@ Nen tang su dung: Render
 
 - Product Service: `https://n23dccn056-dangminhthanh-web-prac2-1.onrender.com`
 - Order Service: `https://n23dccn056-dangminhthanh-web-prac2.onrender.com`
+- Auth Service: `https://n23dccn056-dangminhthanh-web-prac2-3.onrender.com`
+- API Gateway: `https://n23dccn056-dangminhthanh-web-prac2-4.onrender.com`
+
 
 ## Ket qua kiem thu
 - CRUD product, order, auth va gateway chay thanh cong o local
