@@ -10,7 +10,8 @@ RUN npm ci --omit=dev
 RUN npx prisma generate
 
 COPY src ./src
+COPY scripts ./scripts
 
 EXPOSE 3003
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node src/index.js"]
+CMD ["sh", "scripts/start.sh"]
